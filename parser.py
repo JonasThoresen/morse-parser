@@ -5,7 +5,7 @@ import pyperclip
 
 # Constants
 NAME = "Python Morse Parser"
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 CHAR_LIST = ['A', 'B', 'C', 'D', 'E', 'F', 'G',
              'H', 'I', 'J', 'K', 'L', 'M', 'N',
              'O', 'P', 'Q', 'R', 'S', 'T', 'U',
