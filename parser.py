@@ -1,5 +1,7 @@
 # Imports
 import os
+import sys
+import pyperclip
 
 # Constants
 NAME = "Python Morse Parser"
@@ -23,6 +25,43 @@ MORSE_LIST = [".-", "-...", "-.-.", "-..", ".", "..-.", "--.",
               "-....-", "..--.-", ".-..-.", ".-.-", "---.", ".--.-"]
 
 MORSE_OPERATORS = ['-', '.', ' ']
+ACCEPTED_ARGS = ["-c", "-clipboard", "-h", "-help", "-r", "-retain"]
+AUTO_CLIPBOARD = False
+RETAIN = False
+
+# Vars
+performed_run = False
+
+# Check sysargs
+arguments = sys.argv
+
+if len(arguments) > 1:
+    # First entry is file name, so we remove it
+    arguments.pop(0)
+    # Iterate through the args
+    for arg in arguments:
+        low_arg = arg.lower()
+        # If we find an accepted arg, act on it
+        if low_arg in ACCEPTED_ARGS:
+            if low_arg == "-c" or low_arg == "-clipboard":
+                AUTO_CLIPBOARD = True
+            elif low_arg == "-r" or low_arg == "-retain":
+                RETAIN = True
+            elif low_arg == "-h" or low_arg == "-help":
+                print("This application can be run in several ways:"
+                      "\n\n1. No system arguments, which means you "
+                      "\nneed to copy the result manually "
+                      "\n\n2. With the '-C' system argument, which "
+                      "\nmakes the application automatically copy "
+                      "\nthe result to the clipboard (like CTRL + C)."
+                      "\n\n3. With the '-R' system argument, which "
+                      "\ncauses the application to retain data once "
+                      "\nit quits. If -R is not used, data is purged "
+                      "\nonce quit."
+                      "\n\nNote that system arguments can be chained."
+                      "\n")
+                input("Press enter to exit")
+                quit()
 
 
 # Functions
@@ -47,7 +86,13 @@ def response(response_type="init"):
         clear()
 
     elif response_type == "quit":
+        # Clean up clipboard if we used it
+        if (AUTO_CLIPBOARD and performed_run and not RETAIN):
+            pyperclip.copy("")
+
+        # Then quit
         print("Done parsing, quitting...")
+        quit()
 
 
 def morse_to_text(morse):
@@ -64,6 +109,10 @@ def morse_to_text(morse):
             else:
                 print(f"Unknown morse pattern: {morse_str}")
                 text += '?'
+
+    if AUTO_CLIPBOARD:
+        pyperclip.copy(text)
+
     return text
 
 
@@ -84,6 +133,10 @@ def text_to_morse(text):
 
             if i < len(text)-1:
                 morse += ' '
+
+    if AUTO_CLIPBOARD:
+        pyperclip.copy(morse)
+
     return morse
 
 
@@ -95,29 +148,32 @@ parse_morse = True
 while parse_morse:
     response("reminder")
     user_str = input("Parse: ")
+    if user_str:
+        print("hells yeah")
+        if (user_str.strip()).lower() == ":q":
+            parse_morse = False
+            print(performed_run)
 
-    if (user_str.strip()).upper() == ":Q":
-        parse_morse = False
-
-    else:
-        is_morse = True  # Default is txt -> morse
-        if len(user_str) > 1:
-            for char in user_str:
-                if char not in MORSE_OPERATORS:
-                    is_morse = False
         else:
-            is_morse = False
+            performed_run = True
+            is_morse = True  # Default is txt -> morse
+            if len(user_str) > 1:
+                for char in user_str:
+                    if char not in MORSE_OPERATORS:
+                        is_morse = False
+            else:
+                is_morse = False
 
-        if is_morse:
-            response("clear")
-            print("Starting morse parsing")
-            output = f"Text: {user_str}\nMorse: {morse_to_text(user_str)}"
-            print(output)
+            if is_morse:
+                response("clear")
+                print("Starting morse parsing")
+                output = f"Text: {user_str}\nMorse: {morse_to_text(user_str)}"
+                print(output)
 
-        else:  # Assume characters -> morse
-            response("clear")
-            print("Starting character parsing")
-            output = f"Morse: {user_str}\nText: {text_to_morse(user_str)}"
-            print(output)
+            else:  # Assume characters -> morse
+                response("clear")
+                print("Starting character parsing")
+                output = f"Morse: {user_str}\nText: {text_to_morse(user_str)}"
+                print(output)
 
 response("quit")  # When out of loop, display quit message
